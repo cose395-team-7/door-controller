@@ -3,13 +3,14 @@
 #include <Arduino.h>
 #include <SoftwareSerial.h>
 
-#include "wifi_info.h"
+#include "connection_info.h"
 
-#define PIN_WIFI_TX 7
-#define PIN_WIFI_RX 6
+#define PIN_WIFI_TX 6
+#define PIN_WIFI_RX 7
 
-const char *ssid = SSID;
-const char *pswd = PSWD;
+const char *ssid = WIFI_SSID;
+const char *pswd = WIFI_PSWD;
+const char *logicServer = LOGIC_SERVER;
 
 SoftwareSerial wifiSerial(PIN_WIFI_TX, PIN_WIFI_RX);
 int wifiStatus = WL_IDLE_STATUS;
@@ -25,13 +26,14 @@ void setup()
     while (true);
   }
 
-  WiFi.scanNetworks(); // hack
   while (wifiStatus != WL_CONNECTED) {
     Serial.println("[debug] Attempting to connect to WiFi..");
     wifiStatus = WiFi.begin(ssid, pswd);
   }
 
   Serial.println("[debug] Now connected to the network");
+  Serial.print("[debug] IP : ");
+  Serial.println(WiFi.localIP());
 }
 
 void loop()
