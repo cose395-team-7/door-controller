@@ -67,7 +67,16 @@ void loop()
 void onOpen()
 {
   Serial.println("[debug] onOpen()");
-  // TODO
+  
+  servo.write(0);
+  for (int pos = 0; pos <= 35; pos++) {
+    servo.write(pos);
+    delay(15);
+  }
+  for (int pos = 35; pos >= 0; pos--) {
+    servo.write(pos);
+    delay(15);
+  }
 }
 
 void alertError(const String msg)
@@ -85,6 +94,7 @@ void alertError(const String msg)
 
 COMMAND fetchCommand()
 {
+  delay(1000);
   String comm = "";
   int readn = 0;
 
