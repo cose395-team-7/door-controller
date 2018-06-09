@@ -10,6 +10,8 @@
 #define PIN_WIFI_RX 7
 #define PIN_SERVO   9
 
+#define COMMAND_LEN 4
+
 enum DOOR_STATUS {
   DOOR_CLOSED,
   DOOR_OPENED
@@ -17,15 +19,19 @@ enum DOOR_STATUS {
 
 enum COMMAND {
   COMMAND_NONE,
-  COMMAND_CLOSE,
-  COMMAND_OPEN
+  COMMAND_OPEN,
+  COMMAND_UNKNOWN,
+  COMMAND_ERROR
 };
 
 const char *ssid = WIFI_SSID;
 const char *pswd = WIFI_PSWD;
-const char *logicServer = LOGIC_SERVER;
+const char *logicServerIP = LOGIC_SERVER_IP;
+const short logicServerPort = LOGIC_SERVER_PORT;
+int connectionStatus = 0;
 
 SoftwareSerial wifiSerial(PIN_WIFI_TX, PIN_WIFI_RX);
+WiFiEspClient client;
 int wifiStatus = WL_IDLE_STATUS;
 
 Servo servo;
@@ -39,35 +45,73 @@ void setup()
 
 void loop()
 {
+  if (!connectionStatus) return;
+
   switch (fetchCommand()) {
   case COMMAND_NONE: break;
-  case COMMAND_CLOSE: {
-    onClose(); 
-  }
   case COMMAND_OPEN: {
     onOpen();
+    break;
   }
-  default: {
-    alertError("Unknown Error");
+  case COMMAND_ERROR: {
+    Serial.println("[err] Error about logic server");
+    while (true); // problem with logic server
+    break;
+  }
+  case COMMAND_UNKNOWN: {
+    alertError("Unknown-Error");
   }
   }
-}
-
-void onClose()
-{
 }
 
 void onOpen()
 {
+  Serial.println("[debug] onOpen()");
+  // TODO
 }
 
-void alertError(const char* msg)
+void alertError(const String msg)
 {
+  delay(1000);
+  Serial.println("[debug] alertError(" + msg + ")");
+  client.print("GET /api/ShowError/");
+  client.print(msg.c_str());
+  client.println(" HTTP/1.1");
+  client.println();
+
+  while (client.available() <= 20); // hack
+  while (client.available()) client.read();
 }
 
 COMMAND fetchCommand()
 {
-  return COMMAND_OPEN;
+  String comm = "";
+  int readn = 0;
+
+  client.println("GET /api/door HTTP/1.1");
+  client.println();
+
+  Serial.println("[debug] Fetching command...");
+  while (client.available() <= 200); // hack
+  readn = client.available();
+
+  for (int i = 0; i < readn - COMMAND_LEN; i++) client.read();
+  for (int i = 0; i < COMMAND_LEN; i++) comm += (char)client.read();
+  
+  if (readn <= 0) {
+    return COMMAND_ERROR;    
+  }
+  
+  Serial.print("[debug] Command from logic server : ");
+  Serial.println(comm);
+  
+  if (comm.equals("open")) {
+    return COMMAND_OPEN;
+  }
+  else if (comm.equals("none")) {
+    return COMMAND_NONE;
+  }
+  return COMMAND_UNKNOWN;
 }
 
 void setupNetwork()
@@ -88,4 +132,12 @@ void setupNetwork()
   Serial.println("[debug] Now connected to the network");
   Serial.print("[debug] IP : ");
   Serial.println(WiFi.localIP());
+
+  Serial.println("[debug] Connecting to the logic server");
+  if (client.connect(logicServerIP, logicServerPort)) {
+    connectionStatus = 1;
+    Serial.println("[debug] Connected to logic server");
+  } else {
+    Serial.println("[debug] Connection failed");
+  }
 }
