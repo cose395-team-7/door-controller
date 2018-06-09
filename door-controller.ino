@@ -40,6 +40,9 @@ void setup()
 {
   Serial.begin(115200);
   servo.attach(PIN_SERVO);
+  servo.write(0);
+  servo.detach();
+  
   setupNetwork();
 }
 
@@ -67,7 +70,8 @@ void loop()
 void onOpen()
 {
   Serial.println("[debug] onOpen()");
-  
+
+  servo.attach(PIN_SERVO);
   servo.write(0);
   for (int pos = 0; pos <= 35; pos++) {
     servo.write(pos);
@@ -77,6 +81,7 @@ void onOpen()
     servo.write(pos);
     delay(15);
   }
+  servo.detach();
 }
 
 void alertError(const String msg)
