@@ -18,6 +18,15 @@ int wifiStatus = WL_IDLE_STATUS;
 void setup()
 {
   Serial.begin(115200);
+  setupNetwork();
+}
+
+void loop()
+{
+}
+
+void setupNetwork()
+{
   wifiSerial.begin(9600);
 
   WiFi.init(&wifiSerial);
@@ -34,8 +43,4 @@ void setup()
   Serial.println("[debug] Now connected to the network");
   Serial.print("[debug] IP : ");
   Serial.println(WiFi.localIP());
-}
-
-void loop()
-{
 }
