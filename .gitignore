@@ -1,7 +1,7 @@
 #
 # file containing private wifi connection info
 #
-wifi_info.h
+connection_info.h
 
 #
 # vim swap files
